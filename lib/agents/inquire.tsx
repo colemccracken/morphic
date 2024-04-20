@@ -1,8 +1,13 @@
 import { openai } from 'ai/openai'
 import { Copilot } from '@/components/copilot'
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
-import { ExperimentalMessage, experimental_streamObject } from 'ai'
+import {
+  ExperimentalMessage,
+  experimental_generateObject,
+  experimental_streamObject
+} from 'ai'
 import { PartialInquiry, inquirySchema } from '@/lib/schema/inquiry'
+import { groq } from './provider'
 
 export async function inquire(
   uiStream: ReturnType<typeof createStreamableUI>,
@@ -12,8 +17,8 @@ export async function inquire(
   uiStream.update(<Copilot inquiry={objectStream.value} />)
 
   let finalInquiry: PartialInquiry = {}
-  await experimental_streamObject({
-    model: openai.chat('gpt-4-turbo-preview'),
+  await experimental_generateObject({
+    model: groq.chat('llama3-8b-8192'),
     system: `As a professional web researcher, your role is to deepen your understanding of the user's input by conducting further inquiries when necessary.
     After receiving an initial response from the user, carefully assess whether additional questions are absolutely essential to provide a comprehensive and accurate answer. Only proceed with further inquiries if the available information is insufficient or ambiguous.
 
@@ -49,16 +54,16 @@ export async function inquire(
     Remember, your goal is to gather the necessary information to deliver a thorough and accurate response.
     `,
     messages,
+    mode: 'json',
     schema: inquirySchema
   })
     .then(async result => {
-      for await (const obj of result.partialObjectStream) {
-        if (obj) {
-          objectStream.update(obj)
-          finalInquiry = obj
-        }
-      }
+      finalInquiry = result.object
     })
+    .catch(err => {
+      console.error('Error in inquiry:', err)
+    })
+
     .finally(() => {
       objectStream.done()
     })

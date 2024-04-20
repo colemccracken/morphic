@@ -7,13 +7,14 @@ import {
 } from 'ai'
 import { searchSchema } from '@/lib/schema/search'
 import { Section } from '@/components/section'
-import { openai } from 'ai/openai'
+import { openai, OpenAI } from 'ai/openai'
 import { ToolBadge } from '@/components/tool-badge'
 import { SearchSkeleton } from '@/components/search-skeleton'
 import { SearchResults } from '@/components/search-results'
 import { BotMessage } from '@/components/message'
 import Exa from 'exa-js'
 import { SearchResultsImageSection } from '@/components/search-results-image'
+import { groq } from './provider'
 
 export async function researcher(
   uiStream: ReturnType<typeof createStreamableUI>,
@@ -30,7 +31,7 @@ export async function researcher(
   )
 
   const result = await experimental_streamText({
-    model: openai.chat('gpt-4-turbo-preview'),
+    model: groq.chat('llama3-8b-8192'),
     maxTokens: 2500,
     system: `As a professional search expert, you possess the ability to search for any information on the web. 
     For each user query, utilize the search results to their fullest potential to provide additional information and assistance in your response.
@@ -127,7 +128,7 @@ export async function researcher(
     // Add tool responses to the messages
     messages.push({ role: 'tool', content: toolResponses })
   }
-
+  console.log('Messages:', messages)
   return { result, fullResponse }
 }
 

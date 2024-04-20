@@ -1,8 +1,13 @@
 import { createStreamableUI, createStreamableValue } from 'ai/rsc'
-import { ExperimentalMessage, experimental_streamObject } from 'ai'
+import {
+  ExperimentalMessage,
+  experimental_generateObject,
+  experimental_streamObject
+} from 'ai'
 import { PartialRelated, relatedSchema } from '@/lib/schema/related'
 import { Section } from '@/components/section'
 import SearchRelated from '@/components/search-related'
+import { groq } from './provider'
 import { openai } from 'ai/openai'
 
 export async function querySuggestor(
@@ -16,8 +21,8 @@ export async function querySuggestor(
     </Section>
   )
 
-  await experimental_streamObject({
-    model: openai.chat('gpt-4-turbo-preview'),
+  await experimental_generateObject({
+    model: groq.chat('llama3-8b-8192'),
     system: `As a professional web researcher, your task is to generate a set of three queries that explore the subject matter more deeply, building upon the initial query and the information uncovered in its search results.
 
     For instance, if the original query was "Starship's third test flight key milestones", your output should follow this format:
@@ -36,10 +41,12 @@ export async function querySuggestor(
     schema: relatedSchema
   })
     .then(async result => {
-      for await (const obj of result.partialObjectStream) {
-        objectStream.update(obj)
-      }
+      objectStream.update(result)
     })
+    .catch(err => {
+      console.error('Error in query suggestor:', err)
+    })
+
     .finally(() => {
       objectStream.done()
     })

@@ -30,16 +30,16 @@ async function submit(formData?: FormData, skip?: boolean) {
     : null
   // Add the user message to the state
   if (content) {
-    const message = { role: 'user', content }
+    const message = { role: 'user', content: 'Why is Nvidia growing?' }
     messages.push(message as ExperimentalMessage)
     aiState.update([...(aiState.get() as any), message])
   }
-
   async function processEvents() {
     uiStream.update(<Spinner />)
 
     let action: any = { object: { next: 'proceed' } }
     // If the user skips the task, we proceed to the search
+    console.log('messages', messages)
     if (!skip) action = await taskManager(messages)
 
     if (action.object.next === 'inquire') {
